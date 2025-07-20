@@ -1,3 +1,4 @@
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 import pickle
@@ -119,13 +120,15 @@ def save_model_info(run_id: str, model_path: str, file_path: str) -> None:
         raise
     
 def main():
-    mlflow.set_tracking_uri("http://ec2-54-161-93-76.compute-1.amazonaws.com:5000")
+    mlflow.set_tracking_uri("http://3.82.187.171:5000")
     mlflow.set_experiment("dvc-pipeline-runs")
     
     with mlflow.start_run() as run:
         try:
+            print("1")
             root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
             params = load_params(os.path.join(root_dir, 'params.yaml'))
+            print("2")
             
             # Log parameters
             for key, value in params.items():
@@ -138,7 +141,10 @@ def main():
             if hasattr(model,"get_params"):
                 for param_name, param_value in model.get_params().items():
                     mlflow.log_param(param_name,param_value)
-
+            
+            # mlflow.sklearn.log_model(model,"lgbm_model")
+            # mlflow.log_artifact(os.path.join(root_dir,"tfidf_vectorizer.pkl"))
+            
             # Load test data for signature inference
             test_data = load_data(os.path.join(root_dir, 'data/interim/test_processed.csv'))
             
@@ -147,23 +153,64 @@ def main():
             y_test = test_data['category'].values
 
             # Create a DataFrame for signature inference (using first few rows as an example)
-            input_example = pd.DataFrame(X_test_tfidf.toarray()[:5], columns=vectorizer.get_feature_names_out())  # <--- Added for signature
+            # input_example = pd.DataFrame(X_test_tfidf.toarray()[:5], columns=vectorizer.get_feature_names_out())  # <--- Added for signature
             
-            # Infer the signature
-            signature = infer_signature(input_example, model.predict(X_test_tfidf[:5]))  # <--- Added for signature
+            # # # Infer the signature
+            # signature = infer_signature(input_example, model.predict(X_test_tfidf[:5]))  # <--- Added for signature
 
-            # Log model with signature
-            mlflow.sklearn.log_model(
-                model,
-                "lgbm_model",
-                signature=signature,  # <--- Added for signature
-                input_example=input_example  # <--- Added input example
-            )
+            # # Log model with signature
+            # mlflow.sklearn.log_model(
+            #     model,
+            #     "lgbm_model",
+            #     signature=signature,  # <--- Added for signature
+            #     input_example=input_example  # <--- Added input example
+            # )
+            
+            
+            logger.info("Creating model signature...")
+            try:
+                # Use a small sample for signature inference
+                sample_size = min(5, X_test_tfidf.shape[0])
+                X_sample = X_test_tfidf[:sample_size]
+                
+                # Create input example DataFrame
+                feature_names = vectorizer.get_feature_names_out()
+                input_example = pd.DataFrame(X_sample.toarray(), columns=feature_names)
+                
+                # Make predictions for signature inference
+                sample_predictions = model.predict(X_sample)
+                
+                # Infer signature
+                signature = infer_signature(input_example, sample_predictions)
+                logger.debug("Model signature created successfully")
+                
+                # Log model with signature and input example
+                logger.info("Logging model to MLflow...")
+                mlflow.sklearn.log_model(
+                    model,
+                    "lgbm_model",
+                    signature=signature,
+                    input_example=input_example
+                )
+                logger.info("Model logged successfully")
+            except Exception as e:
+                logger.error(f"Error creating signature or logging model: {e}")
+                # Fall back to logging model without signature
+                logger.info("Attempting to log model without signature...")
+                try:
+                    mlflow.sklearn.log_model(model, "lgbm_model")
+                    logger.info("Model logged successfully (without signature)")
+                except Exception as e2:
+                    logger.error(f"Failed to log model even without signature: {e2}")
+                    raise
+            
+            # mlflow.sklearn.log_model(model,"lgbm_model")
+            
             
             
             # Save model info
             model_path = "lgbm_model"
-            # save_model_info(run.info.run_id, model_path, 'experiment_info.json')
+            save_model_info(run.info.run_id, model_path, 'experiment_info.json')
 
             # Log the vectorizer as an artifact
             mlflow.log_artifact(os.path.join(root_dir, 'tfidf_vectorizer.pkl'))
@@ -194,3 +241,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
