@@ -103,13 +103,13 @@ def log_confusion_matrix(cm, dataset_name):
     mlflow.log_artifact(cm_file_path)
     plt.close()
 
-def save_model_info(run_id: str, model_path: str, file_path: str) -> None:
+def save_model_info(run_id: str, model_uri: str, file_path: str) -> None:
     """Save the model run ID and path to a JSON file."""
     try:
         # Create a dictionary with the info you want to save
         model_info = {
             'run_id': run_id,
-            'model_path': model_path
+            'model_uri': model_uri
         }
         # Save the dictionary as a JSON file
         with open(file_path, 'w') as file:
@@ -120,8 +120,8 @@ def save_model_info(run_id: str, model_path: str, file_path: str) -> None:
         raise
     
 def main():
-    mlflow.set_tracking_uri("http://3.82.187.171:5000")
-    mlflow.set_experiment("dvc-pipeline-runs")
+    mlflow.set_tracking_uri("http://ec2-18-208-160-159.compute-1.amazonaws.com:5000")
+    mlflow.set_experiment("dvc-pipeline-runs-yt-comments")
     
     with mlflow.start_run() as run:
         try:
@@ -165,8 +165,7 @@ def main():
             #     signature=signature,  # <--- Added for signature
             #     input_example=input_example  # <--- Added input example
             # )
-            
-            
+
             logger.info("Creating model signature...")
             try:
                 # Use a small sample for signature inference
@@ -186,12 +185,15 @@ def main():
                 
                 # Log model with signature and input example
                 logger.info("Logging model to MLflow...")
-                mlflow.sklearn.log_model(
+                result_log = mlflow.sklearn.log_model(
                     model,
                     "lgbm_model",
                     signature=signature,
                     input_example=input_example
                 )
+                # print(result_log.model_id)
+                # print(result_log.model_uri)
+                # print(result_log.artifact_path)
                 logger.info("Model logged successfully")
             except Exception as e:
                 logger.error(f"Error creating signature or logging model: {e}")
@@ -209,8 +211,12 @@ def main():
             
             
             # Save model info
-            model_path = "lgbm_model"
-            save_model_info(run.info.run_id, model_path, 'experiment_info.json')
+            # artifact_uri = mlflow.get_artifact_uri()
+            # model_id = result_log.model_id
+            # print("___ssss--:: ",model_id)
+            model_uri = result_log.model_uri
+            print(model_uri)
+            save_model_info(run.info.run_id, model_uri, 'experiment_info.json')
 
             # Log the vectorizer as an artifact
             mlflow.log_artifact(os.path.join(root_dir, 'tfidf_vectorizer.pkl'))
