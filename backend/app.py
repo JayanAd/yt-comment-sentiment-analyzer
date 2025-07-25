@@ -66,7 +66,7 @@ def preprocess_comment(comment):
 # Load the model and vectorizer from the model registry and local storage
 def load_model_and_vectorizer(model_name, model_version, vectorizer_path):
     # Set MLflow tracking URI to your server
-    mlflow.set_tracking_uri("http://ec2-44-204-22-251.compute-1.amazonaws.com:5000/")  
+    mlflow.set_tracking_uri("http://ec2-54-174-102-35.compute-1.amazonaws.com:5000/")  
     client = MlflowClient()
     model_uri = f"models:/{model_name}/{model_version}"
     # model = mlflow.pyfunc.load_model(model_uri)
@@ -122,6 +122,7 @@ def predict():
         return jsonify({"error": "No comments provided"}), 400
 
     try:
+        print("Predict API")
         # Preprocess each comment before vectorizing
         preprocessed_comments = [preprocess_comment(comment) for comment in comments]
         # print(preprocessed_comments)
