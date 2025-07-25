@@ -64,7 +64,7 @@ jobs:
         run: |
           git push origin ${{ github.ref_name }}
 
-            - name: Install test dependencies
+      - name: Install test dependencies
         run: |
           pip install pytest
 
