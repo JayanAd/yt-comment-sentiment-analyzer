@@ -1,6 +1,6 @@
 import mlflow
 
-mlflow.set_tracking_uri("http://ec2-54-167-167-8.compute-1.amazonaws.com:5000")
+mlflow.set_tracking_uri("http://ec2-3-85-142-126.compute-1.amazonaws.com:5000/")
 
 try:
     mlflow.set_experiment("test-connection")
