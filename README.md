@@ -12,7 +12,7 @@ This project implements a reproducible pipeline for sentiment classification of 
 - **Data Processing & Analysis:** Pandas, NumPy  
 - **Natural Language Processing (NLP):** NLTK, Scikit-learn (TF-IDF, tokenization, stopword removal)  
 - **Modeling & Evaluation:** Scikit-learn (Logistic Regression, Naive Bayes, SVM, Random Forest), Matplotlib/Seaborn for visualization  
-- **Experiment Tracking & hyper-parameter tuning:** DVC, optuna
+- **Experiment Tracking & hyper-parameter tuning:** Mlflow, DVC, optuna
 - **CI/CD:** Github actions
 - **Backend and Deployment:** Flask (REST API),  AWS  
 - **Development Tools:** Jupyter Notebook, Git, Makefile  
